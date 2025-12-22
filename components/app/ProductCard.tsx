@@ -84,35 +84,6 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </Link>
 
-      {/* Compact thumbnail strip */}
-      <div className={`flex gap-1 ${hasMultipleImages ? " border-t border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-800/50" : ""} p-1  min-h-8`}>
-        {hasMultipleImages &&
-          images.slice(0, 4).map((image, index) => (
-            <button
-              key={image._key ?? index}
-              type="button"
-              className={cn(
-                "relative h-6 flex-1 overflow-hidden rounded transition-all duration-150",
-                hoveredImageIndex === index
-                  ? "ring-1 ring-zinc-900 ring-offset-0 dark:ring-white dark:ring-offset-zinc-900"
-                  : "opacity-60 hover:opacity-100",
-              )}
-              onMouseEnter={() => setHoveredImageIndex(index)}
-              onMouseLeave={() => setHoveredImageIndex(null)}
-            >
-              {image.asset?.url && (
-                <Image
-                  src={image.asset.url}
-                  alt={`${product.name} - view ${index + 1}`}
-                  fill
-                  className="object-cover"
-                  sizes="60px"
-                />
-              )}
-            </button>
-          ))}
-      </div>
-
       <CardContent className="flex grow flex-col justify-between gap-1 p-2">
         <Link href={`/products/${product.slug}`} className="block">
           <h3 className="line-clamp-1 text-xs font-medium leading-tight text-zinc-900 transition-colors group-hover:text-amber-600 dark:text-zinc-100 dark:group-hover:text-amber-500">
