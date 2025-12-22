@@ -1,0 +1,79 @@
+﻿node.exe : C:\Users\p
+c\Desktop\ecommerce\e
+commerce\lib\mongodb.
+ts:6
+At C:\Program Files\n
+odejs\npx.ps1:29 
+char:3
++   & $NODE_EXE 
+$NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (C:\User   
+ s\pc\Des...ib\mo    
+ngodb.ts:6:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+  throw new 
+Error("Please define 
+the MONGODB_URI 
+environment variable 
+inside .env.local");
+        ^
+
+
+Error: Please define 
+the MONGODB_URI 
+environment variable 
+inside .env.local
+    at mongoose (C:\U
+sers\pc\Desktop\ecomm
+erce\ecommerce\lib\mo
+ngodb.ts:6:9)
+    at 
+Object.<anonymous> (C
+:\Users\pc\Desktop\ec
+ommerce\ecommerce\lib
+\mongodb.ts:40:16)
+    at 
+Module._compile (node
+:internal/modules/cjs
+/loader:1730:14)
+    at 
+Object.transformer (C
+:\Users\pc\Desktop\ec
+ommerce\ecommerce\nod
+e_modules\.pnpm\tsx@4
+.21.0\node_modules\ts
+x\dist\register-D46fv
+sV_.cjs:3:1104)
+    at Module.load (n
+ode:internal/modules/
+cjs/loader:1465:32)
+    at 
+Function._load (node:
+internal/modules/cjs/
+loader:1282:12)
+    at TracingChannel
+.traceSync (node:diag
+nostics_channel:322:1
+4)
+    at 
+wrapModuleLoad (node:
+internal/modules/cjs/
+loader:235:24)
+    at 
+Module.require (node:
+internal/modules/cjs/
+loader:1487:12)
+    at require (node:
+internal/modules/help
+ers:135:16)
+
+Node.js v22.15.1
