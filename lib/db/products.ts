@@ -4,24 +4,6 @@ import Category from "../../models/Category";
 import { serialize } from "./utils";
 
 import { Product as ProductType } from "../types";
-
-export async function getAllProducts(): Promise<ProductType[]> {
-  await dbConnect();
-  const products = await Product.find().populate("category").sort({ name: 1 }).lean();
-  return serialize(products) as ProductType[];
-}
-
-export async function getFeaturedProducts(): Promise<ProductType[]> {
-  await dbConnect();
-  const products = await Product.find({ featured: true, stock: { $gt: 0 } })
-    .select('name slug price stock images category color material featured')
-    .populate("category", "title slug")
-    .sort({ name: 1 })
-    .limit(6)
-    .lean();
-  return serialize(products) as ProductType[];
-}
-
 export async function getProductsByCategory(categorySlug: string): Promise<ProductType[]> {
   await dbConnect();
   const category = await Category.findOne({ slug: categorySlug }).lean();
@@ -53,13 +35,13 @@ export async function searchProducts(searchQuery: string, filters: any = {}): Pr
   hasMore: boolean;
 }> {
   await dbConnect();
-  const { 
-    categorySlug, 
-    color, 
-    material, 
-    minPrice, 
-    maxPrice, 
-    inStock, 
+  const {
+    categorySlug,
+    color,
+    material,
+    minPrice,
+    maxPrice,
+    inStock,
     sort,
     page = 1,
     limit = 12
@@ -83,7 +65,7 @@ export async function searchProducts(searchQuery: string, filters: any = {}): Pr
 
   if (color) query.color = color;
   if (material) query.material = material;
-  
+
   if (minPrice || maxPrice) {
     query.price = {};
     if (minPrice) query.price.$gte = minPrice;
@@ -112,7 +94,7 @@ export async function searchProducts(searchQuery: string, filters: any = {}): Pr
       .lean(),
     Product.countDocuments(query)
   ]);
-    
+
   return {
     products: serialize(products) as ProductType[],
     total,
@@ -134,4 +116,90 @@ export async function getOutOfStockProducts(): Promise<ProductType[]> {
   await dbConnect();
   const products = await Product.find({ stock: 0 }).sort({ name: 1 }).lean();
   return serialize(products) as ProductType[];
+}
+import { unstable_cache } from "next/cache";
+
+export const getCachedFeaturedProducts = unstable_cache(
+  async () => {
+    await dbConnect();
+    const products = await Product.find({ featured: true, stock: { $gt: 0 } })
+      .select("name slug price stock images category color material featured")
+      .populate("category", "title slug")
+      .sort({ name: 1 })
+      .limit(6)
+      .lean();
+
+    return serialize(products);
+  },
+  ["featured-products"],
+  { revalidate: 300 } // 5 minutes
+);
+export const getCachedCategories = unstable_cache(
+  async () => {
+    await dbConnect();
+    const categories = await Category.find().sort({ title: 1 }).lean();
+    return serialize(categories);
+  },
+  ["all-categories"],
+  { revalidate: 300 } // 10 minutes
+);
+export const getCachedAllProducts = unstable_cache(
+  async (): Promise<ProductType[]> => {
+    await dbConnect();
+
+    const products = await Product.find()
+      .populate("category")
+      .sort({ name: 1 })
+      .lean();
+
+    return serialize(products) as ProductType[];
+  },
+  ["all-products"], // cache key
+  {
+    revalidate: 300,        // 5 minutes
+    tags: ["products"],    // for manual revalidation
+  }
+);
+
+
+type SearchResult = {
+  products: ProductType[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+};
+
+// 🔑 helper to make cache key stable
+function stableStringify(obj: Record<string, any>) {
+  return JSON.stringify(
+    Object.keys(obj)
+      .sort()
+      .reduce((acc: any, key) => {
+        acc[key] = obj[key];
+        return acc;
+      }, {})
+  );
+}
+
+export function getCachedSearchProducts(
+  searchQuery: string,
+  filters: Record<string, any> = {}
+): Promise<SearchResult> {
+  const filterKey = stableStringify(filters);
+
+  return unstable_cache(
+    async () => {
+      return searchProducts(searchQuery, filters);
+    },
+    [
+      "search-products",
+      searchQuery?.trim() || "all",
+      filterKey,
+    ],
+    {
+      revalidate: 120,      // 2 minutes
+      tags: ["products"],  // admin update → instant invalidate
+    }
+  )();
 }

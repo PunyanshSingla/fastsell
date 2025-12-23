@@ -28,8 +28,6 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const stock = product.stock ?? 0;
   const isOutOfStock = stock <= 0;
-  const hasMultipleImages = images.length > 1;
-
   return (
     <Card className="group relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-white p-0 shadow-sm ring-1 ring-zinc-200 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:ring-zinc-300 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:ring-zinc-700">
       <Link href={`/products/${product.slug}`} className="block">

@@ -1,5 +1,4 @@
-import { getAllCategories } from "@/lib/db/categories";
-import { getFeaturedProducts, searchProducts } from "@/lib/db/products";
+import { getCachedFeaturedProducts, getCachedAllProducts, getCachedCategories, getCachedSearchProducts } from "@/lib/db/products";
 import { ProductSection } from "@/components/app/ProductSection";
 import { CategoryTiles } from "@/components/app/CategoryTiles";
 import { FeaturedCarousel } from "@/components/app/FeaturedCarousel";
@@ -33,7 +32,7 @@ export default async function HomePage({ searchParams }: PageProps) {
   const inStock = params.inStock === "true";
 
   // Fetch products with filters (server-side via MongoDB)
-  const result = await searchProducts(searchQuery, {
+  const result = await getCachedSearchProducts(searchQuery, {
     categorySlug,
     color,
     material,
@@ -48,10 +47,10 @@ export default async function HomePage({ searchParams }: PageProps) {
   const products = result.products;
 
   // Fetch categories for filter sidebar
-  const categories = await getAllCategories();
+  const categories = await getCachedCategories();
 
   // Fetch featured products for carousel
-  const featuredProducts = await getFeaturedProducts();
+  const featuredProducts = await getCachedFeaturedProducts();
 
   return (
     <ProductBrowsingLayout>

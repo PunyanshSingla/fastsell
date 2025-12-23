@@ -42,7 +42,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
       )}
 
       {/* Stock & Add to Cart */}
-      <div className="mt-6 flex flex-col gap-3">
+      <div className="mt-6 flex flex-col sm:flex-row gap-3">
         <StockBadge productId={product._id} stock={product.stock ?? 0} />
         <AddToCartButton
           productId={product._id}
@@ -55,9 +55,9 @@ export function ProductInfo({ product }: ProductInfoProps) {
       </div>
 
       {/* Metadata */}
-      <div className="mt-6 space-y-2 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+      <div className="mt-6 space-y-3 border-t border-zinc-200 pt-6 dark:border-zinc-800">
         {product.material && (
-          <div className="flex justify-between text-sm">
+          <div className="grid grid-cols-[100px_1fr] gap-4 text-sm">
             <span className="text-zinc-500 dark:text-zinc-400">Material</span>
             <span className="font-medium capitalize text-zinc-900 dark:text-zinc-100">
               {product.material}
@@ -65,7 +65,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
           </div>
         )}
         {product.color && (
-          <div className="flex justify-between text-sm">
+          <div className="grid grid-cols-[100px_1fr] gap-4 text-sm">
             <span className="text-zinc-500 dark:text-zinc-400">Color</span>
             <span className="font-medium capitalize text-zinc-900 dark:text-zinc-100">
               {product.color}
@@ -73,7 +73,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
           </div>
         )}
         {product.dimensions && (
-          <div className="flex justify-between text-sm">
+          <div className="grid grid-cols-[100px_1fr] gap-4 text-sm">
             <span className="text-zinc-500 dark:text-zinc-400">Dimensions</span>
             <span className="font-medium text-zinc-900 dark:text-zinc-100">
               {product.dimensions}
@@ -81,7 +81,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
           </div>
         )}
         {product.assemblyRequired !== null && (
-          <div className="flex justify-between text-sm">
+          <div className="grid grid-cols-[100px_1fr] gap-4 text-sm">
             <span className="text-zinc-500 dark:text-zinc-400">Assembly</span>
             <span className="font-medium text-zinc-900 dark:text-zinc-100">
               {product.assemblyRequired ? "Required" : "Not required"}

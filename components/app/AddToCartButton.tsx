@@ -49,7 +49,7 @@ export function AddToCartButton({
       <Button
         disabled
         variant="secondary"
-        className={cn("h-8 w-full text-xs", className)}
+        className={cn("h-11 w-48 text-sm font-medium opacity-50", className)}
       >
         Out of Stock
       </Button>
@@ -59,9 +59,12 @@ export function AddToCartButton({
   // Not in cart - show Add to Basket button
   if (quantityInCart === 0) {
     return (
-      <Button onClick={handleAdd} className={cn("h-8 w-full text-xs", className)}>
-        <ShoppingBag className="mr-1.5 h-3.5 w-3.5" />
-        Add
+      <Button 
+        onClick={handleAdd} 
+        className={cn("h-11 sm:w-48 w-full text-sm font-semibold transition-all hover:scale-[1.01] active:scale-[0.98]", className)}
+      >
+        <ShoppingBag className="mr-2 h-4 w-4" />
+        Add to Cart
       </Button>
     );
   }
@@ -70,29 +73,31 @@ export function AddToCartButton({
   return (
     <div
       className={cn(
-        "flex h-8 w-full items-center rounded-md border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900",
+        "flex h-11 w-48 items-center overflow-hidden rounded-md border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900",
         className,
       )}
     >
       <Button
         variant="ghost"
         size="icon"
-        className="h-full flex-1 rounded-r-none"
+        className="h-full w-12 rounded-none hover:bg-zinc-100 dark:hover:bg-zinc-800"
         onClick={handleDecrement}
+        aria-label="Decrease quantity"
       >
-        <Minus className="h-3 w-3" />
+        <Minus className="h-4 w-4" />
       </Button>
-      <span className="flex-1 text-center text-xs font-semibold tabular-nums">
+      <span className="flex-1 text-center text-sm font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
         {quantityInCart}
       </span>
       <Button
         variant="ghost"
         size="icon"
-        className="h-full flex-1 rounded-l-none disabled:opacity-20"
+        className="h-full w-12 rounded-none hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-20"
         onClick={handleAdd}
         disabled={isAtMax}
+        aria-label="Increase quantity"
       >
-        <Plus className="h-3 w-3" />
+        <Plus className="h-4 w-4" />
       </Button>
     </div>
   );

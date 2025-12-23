@@ -26,7 +26,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
   return (
     <div className="space-y-4">
       {/* Main Image */}
-      <div className="relative aspect-square overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
+      <div className="relative aspect-square overflow-hidden rounded-lg">
         {selectedImage?.asset?.url ? (
           <Image
             src={selectedImage.asset.url}
