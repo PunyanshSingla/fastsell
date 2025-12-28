@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, ShoppingBag, AlertTriangle, Loader2 } from "lucide-react";
+import { ArrowLeft, ShoppingBag, AlertTriangle, Loader2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { CheckoutButton } from "@/components/app/CheckoutButton";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -18,6 +21,52 @@ export function CheckoutClient() {
   const totalPrice = useTotalPrice();
   const totalItems = useTotalItems();
   const { stockMap, isLoading, hasStockIssues } = useCartStock(items);
+
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discountAmount: number;
+    type: string;
+  } | null>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setIsApplyingCoupon(true);
+    
+    try {
+      const res = await fetch("/api/coupons/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          code: couponCode, 
+          subtotal: totalPrice 
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to apply coupon");
+      }
+
+      setAppliedCoupon({
+        code: data.code,
+        discountAmount: data.discountAmount,
+        type: data.type
+      });
+      toast.success("Coupon applied successfully");
+    } catch (error: any) {
+      toast.error(error.message);
+      setAppliedCoupon(null);
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const finalTotal = appliedCoupon 
+    ? totalPrice - appliedCoupon.discountAmount 
+    : totalPrice;
 
   if (items.length === 0) {
     return (
@@ -172,6 +221,48 @@ export function CheckoutClient() {
                   {formatPrice(totalPrice)}
                 </span>
               </div>
+              
+              {/* Coupon Section */}
+              <div className="pt-2">
+                {!appliedCoupon ? (
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="Coupon Code" 
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      className="uppercase"
+                    />
+                    <Button 
+                      variant="outline" 
+                      onClick={handleApplyCoupon}
+                      disabled={isApplyingCoupon || !couponCode}
+                    >
+                      {isApplyingCoupon ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex justify-between text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 p-2 rounded-md items-center">
+                    <span className="flex items-center gap-1 font-medium">
+                      Coupon applied ({appliedCoupon.code})
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span>-{formatPrice(appliedCoupon.discountAmount)}</span>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-4 w-4 hover:bg-transparent text-emerald-600 hover:text-emerald-700"
+                        onClick={() => {
+                          setAppliedCoupon(null);
+                          setCouponCode("");
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="flex justify-between text-sm">
                 <span className="text-zinc-500 dark:text-zinc-400">
                   Shipping
@@ -186,14 +277,17 @@ export function CheckoutClient() {
                     Total
                   </span>
                   <span className="text-zinc-900 dark:text-zinc-100">
-                    {formatPrice(totalPrice)}
+                    {formatPrice(finalTotal)}
                   </span>
                 </div>
               </div>
             </div>
 
             <div className="mt-6">
-              <CheckoutButton disabled={hasStockIssues || isLoading} />
+              <CheckoutButton 
+                disabled={hasStockIssues || isLoading} 
+                couponCode={appliedCoupon ? appliedCoupon.code : undefined}
+              />
             </div>
 
             <p className="mt-4 text-center text-xs text-zinc-500 dark:text-zinc-400">

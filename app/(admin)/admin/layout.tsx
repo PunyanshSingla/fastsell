@@ -46,6 +46,11 @@ const navItems = [
     icon: MessageSquare,
   },
   {
+    label: "Coupons",
+    href: "/admin/coupons",
+    icon: Tags,
+  },
+  {
     label: "Users",
     href: "/admin/users",
     icon: Users,

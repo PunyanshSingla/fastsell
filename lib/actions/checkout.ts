@@ -33,12 +33,15 @@ interface CheckoutResult {
   error?: string;
 }
 
+import Coupon from "@/models/Coupon";
+
 /**
  * Creates a Stripe Checkout Session from cart items
  * Validates stock and prices against MongoDB before creating session
  */
 export async function createCheckoutSession(
-  items: CartItem[]
+  items: CartItem[],
+  couponCode?: string
 ): Promise<CheckoutResult> {
   try {
     // 1. Verify user is authenticated
@@ -147,6 +150,48 @@ export async function createCheckoutSession(
         quantity,
       }));
 
+    // Handle Coupon Logic
+    let stripeCouponId: string | undefined;
+    
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ 
+        code: couponCode.toUpperCase(), 
+        isActive: true 
+      });
+
+      if (coupon) {
+        // Validation checks
+        const subtotal = validatedItems.reduce((acc, item) => acc + (item.finalPrice * item.quantity), 0);
+        
+        if (coupon.expirationDate > new Date() && 
+            (!coupon.usageLimit || coupon.usedCount < coupon.usageLimit) &&
+            (!coupon.minPurchaseAmount || subtotal >= coupon.minPurchaseAmount)) {
+          
+          // Create or retrieve Stripe Coupon
+          try {
+             // We create a new coupon in Stripe every time to ensure it matches our DB params exactly
+             // In a real optimized app, we would sync these or cache the stripe ID
+             const couponParams: Stripe.CouponCreateParams = {
+               name: coupon.code,
+               currency: 'inr',
+             };
+
+             if (coupon.type === 'PERCENTAGE') {
+               couponParams.percent_off = coupon.value;
+             } else {
+               couponParams.amount_off = Math.round(coupon.value * 100);
+             }
+
+             const stripeCoupon = await stripe.coupons.create(couponParams);
+             stripeCouponId = stripeCoupon.id;
+          } catch (err) {
+             console.error("Stripe coupon creation failed", err);
+             // Proceed without coupon or handle error? Proceeding prevents checkout blocking
+          }
+        }
+      }
+    }
+
     // 6. Get or create Stripe customer
     const userEmail = user.emailAddresses[0]?.emailAddress ?? "";
     const userName =
@@ -163,6 +208,7 @@ export async function createCheckoutSession(
       productIds: validatedItems.map((i) => i.product._id.toString()).join(","),
       quantities: validatedItems.map((i) => i.quantity).join(","),
       variantSkus: validatedItems.map((i) => i.variant?.sku || "").join(","),
+      couponCode: couponCode || "",
     };
 
     // 8. Create Stripe Checkout Session
@@ -180,6 +226,7 @@ export async function createCheckoutSession(
         allowed_countries: ["IN", "US", "GB", "CA", "AU"],
       },
       metadata,
+      discounts: stripeCouponId ? [{ coupon: stripeCouponId }] : undefined,
       success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/checkout`,
     });

@@ -10,9 +10,10 @@ import { createCheckoutSession } from "@/lib/actions/checkout";
 
 interface CheckoutButtonProps {
   disabled?: boolean;
+  couponCode?: string;
 }
 
-export function CheckoutButton({ disabled }: CheckoutButtonProps) {
+export function CheckoutButton({ disabled, couponCode }: CheckoutButtonProps) {
   const router = useRouter();
   const items = useCartItems();
   const [isPending, startTransition] = useTransition();
@@ -22,7 +23,7 @@ export function CheckoutButton({ disabled }: CheckoutButtonProps) {
     setError(null);
 
     startTransition(async () => {
-      const result = await createCheckoutSession(items);
+      const result = await createCheckoutSession(items, couponCode);
 
       if (result.success && result.url) {
         // Redirect to Stripe Checkout
