@@ -90,7 +90,6 @@ export async function POST(req: NextRequest) {
       featured: body.featured || false,
       assemblyRequired: body.assemblyRequired || false,
       hasVariants: body.hasVariants || false,
-      hasVariants: body.hasVariants || false,
       variants: body.variants || [],
       images: body.images || [],
       features: body.features || [],

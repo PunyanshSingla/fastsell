@@ -167,7 +167,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
       </div>
 
       {product.reviewCount > 0 && (
-        <div href="#reviews" className="flex items-center gap-1.5 group">
+        <div className="flex items-center gap-1.5 group">
           <StarRating
             rating={product.averageRating}
             size="sm"
