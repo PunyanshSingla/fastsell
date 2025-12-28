@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const isProtectedRoute = createRouteMatcher([
   "/checkout",
@@ -8,6 +9,18 @@ const isProtectedRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  const { pathname } = req.nextUrl;
+
+  // Admin Security: Check for admin_session cookie
+  if (pathname.startsWith("/admin")) {
+    const adminSession = req.cookies.get("admin_session");
+    if (!adminSession) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+  }
+
   if (isProtectedRoute(req)) {
     await auth.protect();
   }

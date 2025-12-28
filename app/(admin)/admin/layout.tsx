@@ -13,7 +13,9 @@ import {
   Tags,
   Users,
   MessageSquare,
+  LogOut,
 } from "lucide-react";
+import { logoutAdmin } from "@/app/actions/admin-auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { Providers } from "@/components/providers/Providers";
 import { cn } from "@/lib/utils";
@@ -185,6 +187,21 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                 </div>
                 <span>Back to Store</span>
               </Link>
+            </div>
+
+            {/* Logout Button */}
+            <div className="px-4 pb-6">
+               <form action={logoutAdmin}>
+                  <button
+                    type="submit"
+                    className="group flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-zinc-500 transition-all hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-900/10 dark:hover:text-red-400"
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 group-hover:bg-red-100 dark:bg-zinc-800 dark:group-hover:bg-red-900/20 transition-colors">
+                      <LogOut className="h-4 w-4" />
+                    </div>
+                    <span>Sign Out</span>
+                  </button>
+               </form>
             </div>
           </div>
         </aside>
