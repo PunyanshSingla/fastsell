@@ -30,7 +30,7 @@ export const ORDER_STATUS_CONFIG: Record<OrderStatusValue, OrderStatusConfig> =
     paid: {
       value: "paid",
       label: "Paid",
-      color: "bg-green-100 text-green-800",
+      color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
       icon: CreditCard,
       emoji: "✅",
       iconColor: "text-emerald-600 dark:text-emerald-400",
@@ -39,16 +39,16 @@ export const ORDER_STATUS_CONFIG: Record<OrderStatusValue, OrderStatusConfig> =
     shipped: {
       value: "shipped",
       label: "Shipped",
-      color: "bg-blue-100 text-blue-800",
+      color: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
       icon: Truck,
       emoji: "📦",
-      iconColor: "text-blue-600 dark:text-blue-400",
-      iconBgColor: "bg-blue-100 dark:bg-blue-900/30",
+      iconColor: "text-amber-600 dark:text-amber-400",
+      iconBgColor: "bg-amber-100 dark:bg-amber-900/30",
     },
     delivered: {
       value: "delivered",
       label: "Delivered",
-      color: "bg-zinc-100 text-zinc-800",
+      color: "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200",
       icon: Package,
       emoji: "🎉",
       iconColor: "text-emerald-600 dark:text-emerald-400",
@@ -57,7 +57,7 @@ export const ORDER_STATUS_CONFIG: Record<OrderStatusValue, OrderStatusConfig> =
     cancelled: {
       value: "cancelled",
       label: "Cancelled",
-      color: "bg-red-100 text-red-800",
+      color: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400",
       icon: XCircle,
       emoji: "❌",
       iconColor: "text-red-600 dark:text-red-400",

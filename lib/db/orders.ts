@@ -26,6 +26,7 @@ export async function getOrderById(id: string) {
 }
 
 export async function getOrdersByCustomer(clerkUserId: string) {
+  console.log("clerkUserId", clerkUserId);
   await dbConnect();
   const orders = await Order.find({ clerkUserId })
     .sort({ createdAt: -1 })

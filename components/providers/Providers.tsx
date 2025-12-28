@@ -1,7 +1,11 @@
-"use client";
-
 import LoadingSpinner from "@/components/loaders/LoadingSpinner";
+import { Toaster } from "sonner";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <Toaster position="top-right" richColors />
+    </>
+  );
 }

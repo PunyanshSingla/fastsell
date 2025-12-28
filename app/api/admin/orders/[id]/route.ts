@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/mongodb"
 import Order from "@/models/Order"
-
-export const runtime = "nodejs" // 🚨 REQUIRED for MongoDB
-
+import Customer from "@/models/Customer"
 type Params = Promise<{ id: string }>
 
 export async function GET(
@@ -15,8 +13,11 @@ export async function GET(
     await dbConnect()
 
     const order = await Order.findById(id)
+      .populate({
+        path: "customers",
+        strictPopulate: false,
+      })
       .populate("items.product")
-      .populate("customer")
       .lean()
 
     if (!order) {
@@ -49,7 +50,7 @@ export async function PATCH(
       id,
       { ...body, updatedAt: new Date() },
       { new: true, runValidators: true }
-    )
+    ).populate("items.product")
 
     if (!order) {
       return NextResponse.json(

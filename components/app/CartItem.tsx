@@ -69,12 +69,18 @@ export function CartItem({ item, stockInfo }: CartItemProps) {
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-zinc-400 hover:text-red-500"
-            onClick={() => removeItem(item.productId)}
+            onClick={() => removeItem(item.productId, item.variant?.sku)}
           >
             <Trash2 className="h-4 w-4" />
             <span className="sr-only">Remove {item.name}</span>
           </Button>
         </div>
+
+        {item?.variant?.variantName && (
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-0.5">
+            {item.variant.variantName || `${item.variant.size} ${item.variant.color ? `/ ${item.variant.color}` : ''}`}
+          </p>
+        )}
 
         <p className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">
           {formatPrice(item.price)}
@@ -91,6 +97,7 @@ export function CartItem({ item, stockInfo }: CartItemProps) {
                 price={item.price}
                 image={item.image}
                 stock={currentStock}
+                selectedVariant={item.variant}
               />
             </div>
           )}

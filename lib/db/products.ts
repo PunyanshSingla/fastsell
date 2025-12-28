@@ -2,14 +2,14 @@ import dbConnect from "../mongodb";
 import Product from "../../models/Product";
 import Category from "../../models/Category";
 import { serialize } from "./utils";
-
 import { Product as ProductType } from "../types";
+
 export async function getProductsByCategory(categorySlug: string): Promise<ProductType[]> {
   await dbConnect();
   const category = await Category.findOne({ slug: categorySlug }).lean();
   if (!category) return [];
   const products = await Product.find({ category: category._id })
-    .select('name slug price stock images category color material featured')
+    .select('name slug price discountPrice stock images category color material featured averageRating reviewCount')
     .sort({ name: 1 })
     .lean();
   return serialize(products) as ProductType[];
@@ -86,7 +86,7 @@ export async function searchProducts(searchQuery: string, filters: any = {}): Pr
   // Execute search with pagination
   const [products, total] = await Promise.all([
     Product.find(query)
-      .select('name slug price stock images category color material featured')
+      .select('name slug price discountPrice stock images category color material featured averageRating reviewCount')
       .populate("category", "title slug")
       .sort(sortOption)
       .skip(skip)
@@ -123,7 +123,7 @@ export const getCachedFeaturedProducts = unstable_cache(
   async () => {
     await dbConnect();
     const products = await Product.find({ featured: true, stock: { $gt: 0 } })
-      .select("name slug price stock images category color material featured")
+      .select("name slug price discountPrice stock images category color material featured averageRating reviewCount")
       .populate("category", "title slug")
       .sort({ name: 1 })
       .limit(6)

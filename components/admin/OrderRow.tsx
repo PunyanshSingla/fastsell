@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getOrderStatus } from "@/lib/constants/orderStatus";
 import { formatPrice, formatDate, formatOrderNumber } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface OrderRowProps {
   order: any;
@@ -17,81 +19,73 @@ export function OrderRow({ order }: OrderRowProps) {
   const itemCount = order.items?.length ?? 0;
 
   return (
-    <TableRow className="group transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-      {/* Order Info - Mobile: includes email, items, total */}
-      <TableCell className="py-3 sm:py-4">
+    <TableRow className="group transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800">
+      {/* Order Info */}
+      <TableCell className="py-4 pl-6">
         <Link href={`/admin/orders/${order._id}`} className="block">
-          <div className="flex items-center justify-between gap-2 sm:block">
-            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+          <div className="flex flex-col gap-0.5">
+            <span className="font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
               #{formatOrderNumber(order.orderNumber)}
             </span>
-            {/* Mobile: Total inline */}
-            <span className="font-medium text-zinc-900 dark:text-zinc-100 sm:hidden">
-              {formatPrice(order.total)}
+            <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest sm:hidden">
+              {itemCount} {itemCount === 1 ? "Item" : "Items"}
             </span>
           </div>
-          {/* Mobile: Email and items */}
-          <div className="mt-1 sm:hidden">
-            <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
-              {order.email}
-            </p>
-            <p className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">
-              {itemCount} {itemCount === 1 ? "item" : "items"}
-              {order.createdAt && (
-                <>
-                  {" · "}
-                  {formatDate(order.createdAt, "short")}
-                </>
-              )}
-            </p>
-          </div>
         </Link>
       </TableCell>
 
-      {/* Email - Desktop only */}
-      <TableCell className="hidden py-4 text-zinc-500 dark:text-zinc-400 sm:table-cell">
-        <Link
-          href={`/admin/orders/${order._id}`}
-          className="block truncate"
-        >
-          {order.email}
+      {/* Customer */}
+      <TableCell className="hidden py-4 sm:table-cell">
+        <Link href={`/admin/orders/${order._id}`} className="block">
+          <p className="font-medium text-zinc-700 dark:text-zinc-300 truncate max-w-[200px]">
+            {order.email}
+          </p>
         </Link>
       </TableCell>
 
-      {/* Items - Desktop only */}
+      {/* Items Count */}
       <TableCell className="hidden py-4 text-center md:table-cell">
-        <Link href={`/admin/orders/${order._id}`} className="block">
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 text-xs font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
           {itemCount}
-        </Link>
+        </span>
       </TableCell>
 
-      {/* Total - Desktop only */}
-      <TableCell className="hidden py-4 font-medium text-zinc-900 dark:text-zinc-100 sm:table-cell">
-        <Link href={`/admin/orders/${order._id}`} className="block">
-          {formatPrice(order.total)}
-        </Link>
+      {/* Total */}
+      <TableCell className="py-4 text-right sm:text-left">
+        <div className="flex flex-col items-end sm:items-start sm:block">
+           <span className="font-bold text-zinc-900 dark:text-zinc-100">
+             {formatPrice(order.total)}
+           </span>
+           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest sm:hidden">
+             {status.label}
+           </span>
+        </div>
       </TableCell>
 
-      {/* Status - Always visible */}
-      <TableCell className="py-3 sm:py-4">
-        <Link
-          href={`/admin/orders/${order._id}`}
-          className="flex justify-center sm:justify-start"
+      {/* Status */}
+      <TableCell className="hidden py-4 sm:table-cell">
+        <Badge
+          variant="secondary"
+          className={cn(
+            "rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border-none",
+            status.color
+          )}
         >
-          <Badge
-            className={`${status.color} flex w-fit items-center gap-1 text-[10px] sm:text-xs`}
-          >
-            <StatusIcon className="h-3 w-3" />
-            <span className="hidden sm:inline">{status.label}</span>
-          </Badge>
-        </Link>
+          <StatusIcon className="mr-1.5 h-3 w-3" />
+          {status.label}
+        </Badge>
       </TableCell>
 
-      {/* Date - Desktop only */}
-      <TableCell className="hidden py-4 text-zinc-500 dark:text-zinc-400 md:table-cell">
-        <Link href={`/admin/orders/${order._id}`} className="block">
-          {formatDate(order.createdAt, "long", "—")}
-        </Link>
+      {/* Date */}
+      <TableCell className="hidden py-4 text-zinc-500 dark:text-zinc-400 md:table-cell pr-6">
+        <div className="flex flex-col items-end text-xs">
+          <span className="font-medium text-zinc-900 dark:text-zinc-100">
+            {formatDate(order.createdAt, "short")}
+          </span>
+          <span className="text-[10px] text-zinc-400">
+            {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
       </TableCell>
     </TableRow>
   );
@@ -100,34 +94,26 @@ export function OrderRow({ order }: OrderRowProps) {
 export function OrderRowSkeleton() {
   return (
     <TableRow>
-      <TableCell className="py-3 sm:py-4">
-        <div>
-          <div className="flex items-center justify-between gap-2 sm:block">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-4 w-14 sm:hidden" />
-          </div>
-          <div className="mt-1 sm:hidden">
-            <Skeleton className="h-3 w-32" />
-            <Skeleton className="mt-1 h-3 w-20" />
-          </div>
-        </div>
+      <TableCell className="py-4 pl-6">
+        <Skeleton className="h-5 w-20" />
       </TableCell>
       <TableCell className="hidden py-4 sm:table-cell">
         <Skeleton className="h-4 w-40" />
       </TableCell>
-      <TableCell className="hidden py-4 text-center md:table-cell">
-        <Skeleton className="mx-auto h-4 w-8" />
+      <TableCell className="hidden py-4 md:table-cell">
+        <Skeleton className="mx-auto h-7 w-7 rounded-full" />
+      </TableCell>
+      <TableCell className="py-4">
+        <Skeleton className="h-5 w-16" />
       </TableCell>
       <TableCell className="hidden py-4 sm:table-cell">
-        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-6 w-24 rounded-lg" />
       </TableCell>
-      <TableCell className="py-3 sm:py-4">
-        <div className="flex justify-center sm:justify-start">
-          <Skeleton className="h-5 w-8 sm:w-20" />
+      <TableCell className="hidden py-4 md:table-cell pr-6">
+        <div className="flex flex-col items-end gap-1">
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-2 w-10" />
         </div>
-      </TableCell>
-      <TableCell className="hidden py-4 md:table-cell">
-        <Skeleton className="h-4 w-24" />
       </TableCell>
     </TableRow>
   );

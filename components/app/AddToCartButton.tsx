@@ -13,6 +13,15 @@ interface AddToCartButtonProps {
   image?: string;
   stock: number;
   className?: string;
+  selectedVariant?: {
+    sku: string;
+    size?: string;
+    color?: string;
+    variantName?: string;
+    price?: number;
+    image?: string;
+  };
+  disabled?: boolean;
 }
 
 export function AddToCartButton({
@@ -21,10 +30,12 @@ export function AddToCartButton({
   price,
   image,
   stock,
-  className,
+   className,
+  selectedVariant,
+  disabled,
 }: AddToCartButtonProps) {
   const { addItem, updateQuantity } = useCartActions();
-  const cartItem = useCartItem(productId);
+  const cartItem = useCartItem(productId, selectedVariant?.sku);
 
   const quantityInCart = cartItem?.quantity ?? 0;
   const isOutOfStock = stock <= 0;
@@ -32,14 +43,29 @@ export function AddToCartButton({
 
   const handleAdd = () => {
     if (quantityInCart < stock) {
-      addItem({ productId, name, price, image }, 1);
-      toast.success(`Added ${name}`);
+      addItem({ 
+          productId, 
+          name, 
+          price: selectedVariant?.price || price, 
+          image: selectedVariant?.image || image, 
+          variant: {
+              sku: selectedVariant?.sku || "",
+              size: selectedVariant?.size,
+              color: selectedVariant?.color,
+              variantName: selectedVariant?.variantName
+          } 
+      }, 1);
+      
+      const variantText = selectedVariant?.variantName || 
+                         (selectedVariant ? `${selectedVariant.size || ""}${selectedVariant.color ? ` / ${selectedVariant.color}` : ""}` : "");
+                         
+      toast.success(`Added ${name}${variantText ? ` (${variantText})` : ""}`);
     }
   };
 
   const handleDecrement = () => {
     if (quantityInCart > 0) {
-      updateQuantity(productId, quantityInCart - 1);
+      updateQuantity(productId, quantityInCart - 1, selectedVariant?.sku);
     }
   };
 
@@ -61,10 +87,11 @@ export function AddToCartButton({
     return (
       <Button 
         onClick={handleAdd} 
+        disabled={disabled}
         className={cn("h-11 sm:w-48 w-full text-sm font-semibold transition-all hover:scale-[1.01] active:scale-[0.98]", className)}
       >
         <ShoppingBag className="mr-2 h-4 w-4" />
-        Add to Cart
+        {disabled ? "Select Variant" : "Add to Cart"}
       </Button>
     );
   }

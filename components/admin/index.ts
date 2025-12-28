@@ -1,7 +1,6 @@
 export { StatCard } from "./StatCard";
 export { LowStockAlert } from "./LowStockAlert";
 export { RecentOrders } from "./RecentOrders";
-export { AIInsightsCard } from "./AIInsightsCard";
 export { StockInput } from "./StockInput";
 export { PriceInput } from "./PriceInput";
 export { FeaturedToggle } from "./FeaturedToggle";
@@ -16,3 +15,6 @@ export {
 export { ImageUploader } from "./ImageUploader";
 export { DeleteButton } from "./DeleteButton";
 export { OrderTableHeader, ProductTableHeader } from "./table-headers";
+export { VariantManager } from "./VariantManager";
+export { AttributeManager } from "./AttributeManager";
+export { FeatureManager } from "./FeatureManager";

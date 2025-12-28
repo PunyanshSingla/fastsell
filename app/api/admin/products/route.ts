@@ -82,13 +82,18 @@ export async function POST(req: NextRequest) {
       slug: typeof body.slug === 'object' ? body.slug.current : body.slug,
       description: body.description || '',
       price: body.price || 0,
+      discountPrice: body.discountPrice,
       stock: body.stock || 0,
       material: body.material,
       color: body.color,
       dimensions: body.dimensions,
       featured: body.featured || false,
       assemblyRequired: body.assemblyRequired || false,
+      hasVariants: body.hasVariants || false,
+      hasVariants: body.hasVariants || false,
+      variants: body.variants || [],
       images: body.images || [],
+      features: body.features || [],
     };
 
     // Only add category if provided

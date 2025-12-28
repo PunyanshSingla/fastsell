@@ -6,6 +6,11 @@ export interface IOrder extends Document {
     product: mongoose.Types.ObjectId | any;
     quantity: number;
     priceAtPurchase: number;
+    variant?: {
+      sku: string;
+      size?: string;
+      color?: string;
+    };
   }[];
   total: number;
   status: string;
@@ -21,7 +26,7 @@ export interface IOrder extends Document {
     country: string;
   };
   stripePaymentId?: string;
-}
+}                             
 
 const OrderSchema = new Schema<IOrder>(
   {
@@ -31,6 +36,11 @@ const OrderSchema = new Schema<IOrder>(
         product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
         quantity: { type: Number, required: true, default: 1 },
         priceAtPurchase: { type: Number, required: true },
+        variant: {
+          sku: String,
+          size: String,
+          color: String,
+        },
       },
     ],
     total: { type: Number, required: true },

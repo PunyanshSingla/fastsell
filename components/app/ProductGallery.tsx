@@ -3,14 +3,20 @@
 import { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { Star } from "lucide-react";
 import type { Product } from "@/lib/types";
 
 interface ProductGalleryProps {
   images: Product["images"] | null;
   productName: string | null;
+  averageRating?: number;
+  reviewCount?: number;
 }
 
-export function ProductGallery({ images, productName }: ProductGalleryProps) {
+export function ProductGallery({ 
+  images, 
+  productName,
+}: ProductGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   if (!images || images.length === 0) {
@@ -28,14 +34,16 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
       {/* Main Image */}
       <div className="relative aspect-square overflow-hidden rounded-lg">
         {selectedImage?.asset?.url ? (
-          <Image
-            src={selectedImage.asset.url}
-            alt={productName ?? "Product image"}
-            fill
-            className="object-contain"
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            priority
-          />
+          <>
+            <Image
+              src={selectedImage.asset.url}
+              alt={productName ?? "Product image"}
+              fill
+              className="object-contain"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              priority
+            />
+          </>
         ) : (
           <div className="flex h-full items-center justify-center text-zinc-400">
             No image
@@ -45,7 +53,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
       {/* Thumbnail Grid */}
       {images.length > 1 && (
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 md:grid-cols-6">
+        <div className="flex gap-2 overflow-x-auto pb-2 sm:grid sm:grid-cols-5 md:grid-cols-6 sm:overflow-visible sm:pb-0 scrollbar-hide">
           {images.map((image, index) => (
             <button
               key={image._key}
@@ -54,7 +62,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               aria-label={`View image ${index + 1}`}
               aria-pressed={selectedIndex === index}
               className={cn(
-                "relative aspect-square overflow-hidden rounded-md bg-zinc-100 transition-all dark:bg-zinc-800",
+                "relative flex-shrink-0 aspect-square w-16 sm:w-auto overflow-hidden rounded-md bg-zinc-100 transition-all dark:bg-zinc-800",
                 selectedIndex === index
                   ? "ring-2 ring-zinc-900 dark:ring-zinc-100"
                   : "hover:opacity-75",

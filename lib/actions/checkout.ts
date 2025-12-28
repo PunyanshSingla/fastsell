@@ -20,6 +20,11 @@ interface CartItem {
   price: number;
   quantity: number;
   image?: string;
+  variant?: {
+    sku: string;
+    size?: string;
+    color?: string;
+  };
 }
 
 interface CheckoutResult {
@@ -58,6 +63,8 @@ export async function createCheckoutSession(
     const validatedItems: {
       product: any;
       quantity: number;
+      variant?: any;
+      finalPrice: number;
     }[] = [];
 
     for (const item of items) {
@@ -70,19 +77,50 @@ export async function createCheckoutSession(
         continue;
       }
 
-      if ((product.stock ?? 0) === 0) {
-        validationErrors.push(`"${product.name}" is out of stock`);
-        continue;
-      }
+      // Handle Variants
+      if (product.hasVariants && item.variant) {
+        const variant = product?.variants?.find((v: any) => v.sku === item.variant?.sku);
+        if (!variant) {
+          validationErrors.push(`Variant ${item.variant.sku} for "${product.name}" not found`);
+          continue;
+        }
 
-      if (item.quantity > (product.stock ?? 0)) {
-        validationErrors.push(
-          `Only ${product.stock} of "${product.name}" available`
-        );
-        continue;
-      }
+        if ((variant.stock ?? 0) === 0) {
+          validationErrors.push(`"${product.name}" (${variant.size}${variant.color ? ` / ${variant.color}` : ""}) is out of stock`);
+          continue;
+        }
 
-      validatedItems.push({ product, quantity: item.quantity });
+        if (item.quantity > (variant.stock ?? 0)) {
+          validationErrors.push(`Only ${variant.stock} of "${product.name}" variant available`);
+          continue;
+        }
+
+        validatedItems.push({ 
+          product, 
+          quantity: item.quantity, 
+          variant, 
+          finalPrice: variant.price 
+        });
+      } else {
+        // Base product validation
+        if ((product.stock ?? 0) === 0) {
+          validationErrors.push(`"${product.name}" is out of stock`);
+          continue;
+        }
+
+        if (item.quantity > (product.stock ?? 0)) {
+          validationErrors.push(
+            `Only ${product.stock} of "${product.name}" available`
+          );
+          continue;
+        }
+
+        validatedItems.push({ 
+          product, 
+          quantity: item.quantity, 
+          finalPrice: product.price 
+        });
+      }
     }
 
     if (validationErrors.length > 0) {
@@ -91,17 +129,20 @@ export async function createCheckoutSession(
 
     // 5. Create Stripe line items with validated prices
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
-      validatedItems.map(({ product, quantity }) => ({
+      validatedItems.map(({ product, quantity, variant, finalPrice }) => ({
         price_data: {
           currency: "inr",
           product_data: {
-            name: product.name ?? "Product",
+            name: variant 
+              ? `${product.name} - ${variant.size}${variant.color ? ` / ${variant.color}` : ""}`
+              : product.name ?? "Product",
             images: product.images?.[0]?.asset?.url ? [product.images[0].asset.url] : [],
             metadata: {
               productId: product._id.toString(),
+              sku: variant?.sku || "",
             },
           },
-          unit_amount: Math.round((product.price ?? 0) * 100), // Convert to paise
+          unit_amount: Math.round((finalPrice ?? 0) * 100), // Convert to paise
         },
         quantity,
       }));
@@ -121,10 +162,10 @@ export async function createCheckoutSession(
       mongoCustomerId,
       productIds: validatedItems.map((i) => i.product._id.toString()).join(","),
       quantities: validatedItems.map((i) => i.quantity).join(","),
+      variantSkus: validatedItems.map((i) => i.variant?.sku || "").join(","),
     };
 
     // 8. Create Stripe Checkout Session
-    // Priority: NEXT_PUBLIC_BASE_URL > Vercel URL > localhost
     const baseUrl =
       process.env.NEXT_PUBLIC_BASE_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
@@ -136,59 +177,7 @@ export async function createCheckoutSession(
       line_items: lineItems,
       customer: stripeCustomerId,
       shipping_address_collection: {
-        allowed_countries: [
-          "GB", // United Kingdom
-          "US", // United States
-          "CA", // Canada
-          "AU", // Australia
-          "NZ", // New Zealand
-          "IE", // Ireland
-          "DE", // Germany
-          "FR", // France
-          "ES", // Spain
-          "IT", // Italy
-          "NL", // Netherlands
-          "BE", // Belgium
-          "AT", // Austria
-          "CH", // Switzerland
-          "SE", // Sweden
-          "NO", // Norway
-          "DK", // Denmark
-          "FI", // Finland
-          "PT", // Portugal
-          "PL", // Poland
-          "CZ", // Czech Republic
-          "GR", // Greece
-          "HU", // Hungary
-          "RO", // Romania
-          "BG", // Bulgaria
-          "HR", // Croatia
-          "SI", // Slovenia
-          "SK", // Slovakia
-          "LT", // Lithuania
-          "LV", // Latvia
-          "EE", // Estonia
-          "LU", // Luxembourg
-          "MT", // Malta
-          "CY", // Cyprus
-          "JP", // Japan
-          "SG", // Singapore
-          "HK", // Hong Kong
-          "KR", // South Korea
-          "TW", // Taiwan
-          "MY", // Malaysia
-          "TH", // Thailand
-          "IN", // India
-          "AE", // United Arab Emirates
-          "SA", // Saudi Arabia
-          "IL", // Israel
-          "ZA", // South Africa
-          "BR", // Brazil
-          "MX", // Mexico
-          "AR", // Argentina
-          "CL", // Chile
-          "CO", // Colombia
-        ],
+        allowed_countries: ["IN", "US", "GB", "CA", "AU"],
       },
       metadata,
       success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,

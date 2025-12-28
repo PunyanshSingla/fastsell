@@ -23,11 +23,11 @@ export default async function OrderDetailPage({ params }: OrderPageProps) {
   const { userId } = await auth();
 
   const order: Order | null = await getOrderById(id);
-
   // Verify order exists and belongs to current user
   if (!order || order.clerkUserId !== userId) {
     notFound();
   }
+  console.log(order, "order from single order page ")
 
   const status = getOrderStatus(order.status);
   const StatusIcon = status.icon;
@@ -73,9 +73,9 @@ export default async function OrderDetailPage({ params }: OrderPageProps) {
                 <div key={item._id} className="flex gap-4 px-6 py-4">
                   {/* Image */}
                   <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-zinc-100 dark:bg-zinc-800">
-                    {item.product?.image?.asset?.url ? (
+                    {item.product?.images?.[0]?.asset?.url ? (
                       <Image
-                        src={item.product.image.asset.url}
+                        src={item.product.images[0].asset.url}
                         alt={item.product.name ?? "Product"}
                         fill
                         className="object-cover"
@@ -83,7 +83,7 @@ export default async function OrderDetailPage({ params }: OrderPageProps) {
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center text-xs text-zinc-400">
-                        No image
+                        No image in this
                       </div>
                     )}
                   </div>

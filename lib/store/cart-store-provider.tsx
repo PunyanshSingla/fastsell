@@ -104,9 +104,9 @@ export const useTotalPrice = () =>
 /**
  * Find a specific item in cart
  */
-export const useCartItem = (productId: string) =>
+export const useCartItem = (productId: string, variantSku?: string) =>
   useCartStore((state) =>
-    state.items.find((item) => item.productId === productId),
+    state.items.find((item) => item.productId === productId && item.variant?.sku === variantSku),
   );
 
 /**

@@ -5,6 +5,8 @@ export interface ICustomer extends Document {
   name?: string;
   clerkUserId?: string;
   stripeCustomerId?: string;
+  wishlist: mongoose.Types.ObjectId[];
+  reviewCount: number;
 }
 
 const CustomerSchema = new Schema<ICustomer>(
@@ -13,6 +15,8 @@ const CustomerSchema = new Schema<ICustomer>(
     name: { type: String },
     clerkUserId: { type: String },
     stripeCustomerId: { type: String },
+    wishlist: [{ type: Schema.Types.ObjectId, ref: 'Product' }],
+    reviewCount: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

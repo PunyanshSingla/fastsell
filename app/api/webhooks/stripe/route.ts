@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import dbConnect from "@/lib/mongodb";
 import Order from "@/models/Order";
 import Product from "@/models/Product";
+import { sendOrderConfirmationEmail } from "@/lib/emails/sendOrderConfirmation";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("STRIPE_SECRET_KEY is not defined");
@@ -69,119 +70,142 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     await dbConnect();
     console.log("✅ Database connected in webhook");
 
-    // Idempotency check: prevent duplicate processing on webhook retries
     const existingOrder = await Order.findOne({ stripePaymentId });
-
     if (existingOrder) {
-      console.log(
-        `⚠️ Webhook already processed for payment ${stripePaymentId}, skipping`
-      );
+      console.log(`⚠️ Webhook already processed for payment ${stripePaymentId}, skipping`);
       return;
     }
 
-    // Extract metadata
     const metadata = session.metadata ?? {};
-    console.log("📝 Metadata received:", JSON.stringify(metadata, null, 2));
-
     const {
       clerkUserId,
       userEmail,
       mongoCustomerId,
       productIds: productIdsString,
       quantities: quantitiesString,
+      variantSkus: variantSkusString,
     } = metadata;
 
     if (!clerkUserId || !productIdsString || !quantitiesString) {
-      console.error("❌ Missing metadata in checkout session:", {
-        clerkUserId: !!clerkUserId,
-        productIds: !!productIdsString,
-        quantities: !!quantitiesString
-      });
+      console.error("❌ Missing metadata in checkout session");
       return;
     }
 
     const productIds = productIdsString.split(",");
     const quantities = quantitiesString.split(",").map(Number);
+    const variantSkus = variantSkusString ? variantSkusString.split(",") : [];
 
-    console.log(`📦 Fetching line items for session ${session.id}...`);
-    // Get line items from Stripe
     const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-    console.log(`✅ Fetched ${lineItems.data.length} line items`);
 
     // Build order items array
-    const orderItems = productIds.map((productId, index) => ({
-      product: productId,
-      quantity: quantities[index],
-      priceAtPurchase: lineItems.data[index]?.amount_total
-        ? lineItems.data[index].amount_total / 100
-        : 0,
+    const orderItems = await Promise.all(productIds.map(async (productId, index) => {
+      const sku = variantSkus[index];
+      let variantDetails = undefined;
+
+      if (sku) {
+        // Fetch product to get size/color for the order record
+        const product = await Product.findById(productId);
+        const variant = product?.variants?.find((v: any) => v.sku === sku);
+        if (variant) {
+          variantDetails = {
+            sku,
+            size: variant.size,
+            color: variant.color
+          };
+        }
+      }
+
+      return {
+        product: productId,
+        quantity: quantities[index],
+        priceAtPurchase: lineItems.data[index]?.amount_total
+          ? lineItems.data[index].amount_total / 100
+          : 0,
+        variant: variantDetails
+      };
     }));
 
-    // Generate order number
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-    // Extract shipping address
-    const shippingAddress = session.customer_details?.address;
-    const customerName = session.customer_details?.name;
-    
-  const address = {
-  name:
-    session.customer_details?.name ||
-    userEmail ||
-    "Guest Customer",
+    const address = {
+      name: session.customer_details?.name || userEmail || "Guest Customer",
+      line1: session.customer_details?.address?.line1 || "",
+      line2: session.customer_details?.address?.line2 || "",
+      city: session.customer_details?.address?.city || "",
+      postcode: session.customer_details?.address?.postal_code || "",
+      country: session.customer_details?.address?.country || "",
+    };
 
-  line1: session.customer_details?.address?.line1 || "",
-  line2: session.customer_details?.address?.line2 || "",
-  city: session.customer_details?.address?.city || "",
-  postcode: session.customer_details?.address?.postal_code || "",
-  country: session.customer_details?.address?.country || "",
-};
-
-
-    console.log(`🔨 Creating order ${orderNumber} in MongoDB...`, {
-      customer: mongoCustomerId,
+    const order = await Order.create({
+      orderNumber,
+      customer: (mongoCustomerId && mongoCustomerId.length === 24) ? mongoCustomerId : undefined,
       clerkUserId,
-      itemCount: orderItems.length,
-      total: (session.amount_total ?? 0) / 100
+      email: userEmail ?? session.customer_details?.email ?? "",
+      items: orderItems,
+      total: (session.amount_total ?? 0) / 100,
+      status: "paid",
+      stripePaymentId,
+      address,
     });
 
-    let order;
-    try {
-      // Create order in MongoDB
-      order = await Order.create({
-        orderNumber,
-        customer: (mongoCustomerId && mongoCustomerId.length === 24) ? mongoCustomerId : undefined, 
-        clerkUserId,
-        email: userEmail ?? session.customer_details?.email ?? "",
-        items: orderItems,
-        total: (session.amount_total ?? 0) / 100,
-        status: "paid",
-        stripePaymentId,
-        address,
-      });
-      console.log(`✨ Order saved successfully: ${order._id} (${orderNumber})`);
-    } catch (dbError: any) {
-      console.error("❌ Mongoose Order.create failed:", {
-        message: dbError.message,
-        errors: dbError.errors ? Object.keys(dbError.errors) : "none",
-        details: dbError.errors ? JSON.stringify(dbError.errors) : dbError
-      });
-      throw dbError;
+    console.log(`✨ Order saved: ${orderNumber}`);
+
+    // Update stock levels
+    console.log("📉 Updating stock levels...");
+    for (let i = 0; i < productIds.length; i++) {
+      const productId = productIds[i];
+      const quantity = quantities[i];
+      const sku = variantSkus[i];
+
+      if (sku) {
+        // Decrease stock for specific variant
+        await Product.updateOne(
+          { _id: productId, "variants.sku": sku },
+          { $inc: { "variants.$.stock": -quantity } }
+        );
+      } else {
+        // Decrease base product stock
+        await Product.updateOne(
+          { _id: productId },
+          { $inc: { stock: -quantity } }
+        );
+      }
     }
+    console.log("✅ Stock updates completed");
+    console.log("📧 Sending order confirmation email...");
+    const populatedOrder = await Order.findById(order._id)
+      .populate("items.product", "name images")
+      .lean();
+    console.log(populatedOrder.items[0].product.images[0].asset.url, "populatedOrder");
 
-    // Decrease stock for all products
-    console.log("📉 Updating product stock levels...");
-    const stockUpdates = productIds.map((productId, i) => ({
-      updateOne: {
-        filter: { _id: productId },
-        update: { $inc: { stock: -quantities[i] } },
+    await sendOrderConfirmationEmail({
+      email: order.email,
+      redirectId: order._id,
+      firstName: order.address.name.split(" ")[0],
+      orderId: order.orderNumber,
+      orderDate: new Date(order.createdAt).toLocaleDateString(),
+      items: populatedOrder.items.map((item: any) => ({
+        name: item.product?.name ?? "Product",
+        image: item.product?.images?.[0].asset.url ?? "",
+        price: item.priceAtPurchase,
+        quantity: item.quantity,
+        variant: item.variant?.size || item.variant?.color,
+      })),
+      subtotal: order.total,
+      shippingCost: 0,
+      totalAmount: order.total,
+      shippingAddress: {
+        street: order.address.line1,
+        city: order.address.city,
+        state: "",
+        zip: order.address.postcode,
+        country: order.address.country,
       },
-    }));
+    });
 
-    await Product.bulkWrite(stockUpdates);
-    console.log(`✅ Stock updated for ${productIds.length} products`);
+    console.log("✅ Order confirmation email sent");
   } catch (error) {
-    console.error("❌ Error handling checkout.session.completed:", error);
-    throw error; // Re-throw to return 500 and trigger Stripe retry
+    console.error("❌ Error in handleCheckoutCompleted:", error);
+    throw error;
   }
 }

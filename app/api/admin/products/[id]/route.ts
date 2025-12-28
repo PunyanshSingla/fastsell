@@ -37,9 +37,42 @@ export async function PATCH(
     await dbConnect();
     void Category;
     const body = await req.json();
+    
+    // Transform the data to match the Product model (similar to POST)
+    const updateData: any = {
+      ...body,
+      updatedAt: new Date(),
+    };
+
+    // Handle slug transformation (could be string or object { current: string })
+    if (body.slug) {
+      updateData.slug = typeof body.slug === 'object' ? body.slug.current : body.slug;
+    }
+
+    // Explicitly handle discountPrice - set to null to remove it from DB when empty
+    if (body.discountPrice !== undefined) {
+      updateData.discountPrice = body.discountPrice === "" || body.discountPrice === null 
+        ? null 
+        : Number(body.discountPrice);
+    }
+
+    // Transform variants if present
+    if (body.variants && Array.isArray(body.variants)) {
+      updateData.variants = body.variants.map((v: any) => ({
+        ...v,
+        discountPrice: (v.discountPrice === "" || v.discountPrice === undefined || v.discountPrice === null) 
+          ? null 
+          : Number(v.discountPrice),
+      }));
+    }
+
+    if(body.features) {
+      updateData.features = body.features;
+    }
+
     const product = await Product.findByIdAndUpdate(
       id,
-      { ...body, updatedAt: new Date() },
+      updateData,
       { new: true, runValidators: true }
     ).populate("category");
 
@@ -52,6 +85,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, product });
   } catch (error: any) {
+    console.error("Product update error:", error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
