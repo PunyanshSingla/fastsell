@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { AddToCartButton } from "@/components/app/AddToCartButton";
+import { AddToCompareButton } from "@/components/app/AddToCompareButton";
 import { StockBadge } from "@/components/app/StockBadge";
 import { StarRating } from "@/components/app/StarRating";
 import { formatPrice } from "@/lib/utils";
@@ -258,7 +259,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
         </div>
 
         {/* Main CTA */}
-        <div className="flex gap-3 h-12">
+        <div className="flex flex-wrap gap-3">
           <AddToCartButton
             productId={product._id}
             name={product.name ?? "Unknown Product"}
@@ -272,7 +273,11 @@ export function ProductInfo({ product }: ProductInfoProps) {
               image: selectedVariant.image
             } : undefined}
             disabled={product.hasVariants && !selectedVariant}
-            className="w-2/5 h-full text-base font-bold cart-button"
+            className="h-12 flex-1 min-w-[140px] text-base font-bold cart-button"
+          />
+          <AddToCompareButton 
+            product={product}
+            className="h-12"
           />
           <Button
             variant="outline"

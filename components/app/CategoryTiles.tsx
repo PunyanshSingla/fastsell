@@ -33,7 +33,7 @@ export function CategoryTiles({
   };
 
   return (
-    <div className="relative bg-white dark:bg-zinc-950">
+    <div className="relative bg-[#FAFAFA] dark:bg-zinc-950">
       {/* Scroll affordance fades */}
       <div className="absolute left-0 top-0 z-10 h-full w-8 bg-gradient-to-r from-white to-transparent pointer-events-none dark:from-zinc-950 sm:w-12" />
       <div className="absolute right-0 top-0 z-10 h-full w-8 bg-gradient-to-l from-white to-transparent pointer-events-none dark:from-zinc-950 sm:w-12" />

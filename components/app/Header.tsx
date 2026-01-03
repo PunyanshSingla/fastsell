@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Package, ShoppingBag, Sparkles, User, Heart } from "lucide-react";
+import { Package, ShoppingBag, Sparkles, User, Heart, GitCompareArrows } from "lucide-react";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { useCartActions, useTotalItems } from "@/lib/store/cart-store-provider";
 import { useChatActions, useIsChatOpen } from "@/lib/store/chat-store-provider";
 import { useWishlistItems } from "@/lib/store/wishlist-store-provider";
+import { useCompareCount } from "@/lib/store/compare-store-provider";
 
 export function Header() {
   const { openCart } = useCartActions();
@@ -14,6 +15,7 @@ export function Header() {
   const isChatOpen = useIsChatOpen();
   const totalItems = useTotalItems();
   const wishlistItems = useWishlistItems();
+  const compareCount = useCompareCount();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/80">
@@ -36,6 +38,18 @@ export function Header() {
               </Link>
             </Button>
           </SignedIn>
+
+          {/* Compare Button */}
+          <Button variant="outline" size="sm" asChild className="relative h-8 sm:h-9 px-2 sm:px-3">
+            <Link href="/compare" className="flex items-center gap-1.5 sm:gap-2">
+              <GitCompareArrows className="h-4 w-4 shrink-0" />
+              {compareCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] sm:text-xs text-white font-medium">
+                  {compareCount > 9 ? "9+" : compareCount}
+                </span>
+              )}
+            </Link>
+          </Button>
 
           {/* Wishlist Button */}
           <Button variant="outline" size="sm" asChild className="relative h-8 sm:h-9 px-2 sm:px-3">

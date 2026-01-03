@@ -2,6 +2,7 @@
 
 import { CartStoreProvider } from "@/lib/store/cart-store-provider";
 import { WishlistStoreProvider } from "@/lib/store/wishlist-store-provider";
+import { CompareStoreProvider } from "@/lib/store/compare-store-provider";
 import { ChatStoreProvider } from "@/lib/store/chat-store-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
@@ -14,14 +15,16 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     <ClerkProvider>
       <CartStoreProvider>
         <WishlistStoreProvider>
-          <ChatStoreProvider>
-            <AppShell>
-              <Header />
-              <main>{children}</main>
-            </AppShell>
-            <CartSheet />
-            <Toaster position="bottom-center" />
-          </ChatStoreProvider>
+          <CompareStoreProvider>
+            <ChatStoreProvider>
+              <AppShell>
+                <Header />
+                <main>{children}</main>
+              </AppShell>
+              <CartSheet />
+              <Toaster position="bottom-center" />
+            </ChatStoreProvider>
+          </CompareStoreProvider>
         </WishlistStoreProvider>
       </CartStoreProvider>
     </ClerkProvider>
