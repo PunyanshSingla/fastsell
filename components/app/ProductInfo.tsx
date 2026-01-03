@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { AddToCartButton } from "@/components/app/AddToCartButton";
 import { AddToCompareButton } from "@/components/app/AddToCompareButton";
+import { ShareButton } from "@/components/app/ShareButton";
 import { StockBadge } from "@/components/app/StockBadge";
 import { StarRating } from "@/components/app/StarRating";
 import { formatPrice } from "@/lib/utils";
@@ -289,6 +290,10 @@ export function ProductInfo({ product }: ProductInfoProps) {
           >
             <Heart className={cn("h-6 w-6 transition-colors", isInWishlist && "fill-red-500 text-red-500")} />
           </Button>
+          <ShareButton 
+            productName={product.name}
+            productSlug={product.slug}
+          />
         </div>
       </div>
 
